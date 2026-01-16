@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,6 +9,7 @@
     <link rel="stylesheet" href="style.css">
     <title>Personal Expense Tracker</title>
 </head>
+
 <body>
     <div class="header">
         <h1>Good Morning Shristi!</h1>
@@ -26,11 +28,45 @@
         </div>
     </div>
     <div class="main-content">
-        
-        
+        <div class="dashboard-grid">
+           
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Monthly Income</h3>
+                    <button class="card-menu">
+                        <i class="fas fa-ellipsis-h"></i>
+                    </button>
+                </div>
+                <div class="amount income-amount">Rs 2000</div>
+                <div class="change">
+                    <i class="fas fa-arrow-up"> </i>
+                    12% vs last month
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Monthly Expenses</h3>
+                    <button class="card-menu">
+                        <i class="fas fa-ellipsis-h"></i>
+                    </button>
+                </div>
+                <div class="amount income-amount">Rs 1800</div>
+                <div class="change">
+                    <i class="fas fa-arrow-up"> </i>
+                    12% vs last month
+                </div>
+            </div>
+
+        </div>
     </div>
-    
+
+
+
+    </div>
+
     <script src="script.js"></script>
-   
+
 </body>
+
 </html>
