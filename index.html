@@ -4,32 +4,126 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Practice Project</title>
+    <title>Personal Expense Tracker</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
-    <title>Personal Expense Tracker</title>
 </head>
 
 <body>
-    <div class="header">
-        <h1>Good Morning Shristi!</h1>
-        <div class="header-controls">
-            <div class="dropdown">
-                Daily<i class="fas fa-chevron-down"></i>
+    <!-- Authentication Container -->
+    <div id="auth-container" class="auth-container">
+        <!-- Login Form -->
+        <div id="login-form" class="auth-form active">
+            <div class="auth-card">
+                <h2>Welcome Back</h2>
+                <p class="auth-subtitle">Sign in to your expense tracker</p>
+                <form id="login-submit" class="form-group">
+                    <div class="form-control">
+                        <label for="login-email">Email Address</label>
+                        <input type="email" id="login-email" placeholder="Enter your email" required>
+                        <span class="error-message" id="login-email-error"></span>
+                    </div>
+                    <div class="form-control">
+                        <label for="login-password">Password</label>
+                        <div class="password-input-group">
+                            <input type="password" id="login-password" placeholder="Enter your password" required>
+                            <button type="button" class="toggle-password" onclick="togglePassword('login-password')">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                        <span class="error-message" id="login-password-error"></span>
+                    </div>
+                    <button type="submit" class="btn-auth">Sign In</button>
+                </form>
+                <p class="auth-toggle">Don't have an account? <a href="#" onclick="toggleAuthForms()">Sign up</a></p>
             </div>
-            <div class="date-picker">
-                <i class="fas fa-calendar"></i>
-                15-01-2026
+        </div>
+
+        <!-- Registration Form -->
+        <div id="register-form" class="auth-form">
+            <div class="auth-card">
+                <h2>Create Account</h2>
+                <p class="auth-subtitle">Start managing your finances today</p>
+                <form id="register-submit" class="form-group">
+                    <div class="form-control">
+                        <label for="register-name">Full Name</label>
+                        <input type="text" id="register-name" placeholder="Enter your full name" required>
+                        <span class="error-message" id="register-name-error"></span>
+                    </div>
+                    <div class="form-control">
+                        <label for="register-email">Email Address</label>
+                        <input type="email" id="register-email" placeholder="Enter your email" required>
+                        <span class="error-message" id="register-email-error"></span>
+                    </div>
+                    <div class="form-control">
+                        <label for="register-password">Password</label>
+                        <div class="password-input-group">
+                            <input type="password" id="register-password" placeholder="Create a password (min 8 characters)" required>
+                            <button type="button" class="toggle-password" onclick="togglePassword('register-password')">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                        <span class="error-message" id="register-password-error"></span>
+                    </div>
+                    <div class="form-control">
+                        <label for="register-confirm">Confirm Password</label>
+                        <div class="password-input-group">
+                            <input type="password" id="register-confirm" placeholder="Confirm your password" required>
+                            <button type="button" class="toggle-password" onclick="togglePassword('register-confirm')">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                        <span class="error-message" id="register-confirm-error"></span>
+                    </div>
+                    <button type="submit" class="btn-auth">Create Account</button>
+                </form>
+                <p class="auth-toggle">Already have an account? <a href="#" onclick="toggleAuthForms()">Sign in</a></p>
             </div>
-            <div class="export-btn">
-                <i class="fas fa-download"></i>
-                Export
+        </div>
+
+        <!-- Email Verification Form -->
+        <div id="verify-form" class="auth-form">
+            <div class="auth-card">
+                <h2>Verify Email</h2>
+                <p class="auth-subtitle">Enter the 6-digit code sent to your email</p>
+                <form id="verify-submit" class="form-group">
+                    <div class="form-control">
+                        <label for="verify-code">Verification Code</label>
+                        <input type="text" id="verify-code" placeholder="Enter 6-digit code" maxlength="6" required>
+                        <span class="error-message" id="verify-code-error"></span>
+                    </div>
+                    <button type="submit" class="btn-auth">Verify Email</button>
+                    <button type="button" class="btn-secondary" onclick="goBackToLogin()">Go Back</button>
+                </form>
             </div>
         </div>
     </div>
+
+    <!-- Main Dashboard (Hidden until authenticated) -->
+    <div id="dashboard" class="dashboard-container" style="display: none;">
+            <div class="header-content">
+            <h1 id="greeting">Good Morning!</h1>
+            <div class="header-controls">
+                <div class="dropdown">
+                    Daily<i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="date-picker">
+                    <i class="fas fa-calendar"></i>
+                    <span id="current-date">15-01-2026</span>
+                </div>
+                <div class="export-btn">
+                    <i class="fas fa-download"></i>
+                    Export
+                </div>
+                <button id="logout-btn" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Logout
+                </button>
+            </div>
+        </div>
     <div class="main-content">
+        <!-- Summary Cards -->
         <div class="dashboard-grid">
-           
             <div class="card">
                 <div class="card-header">
                     <h3 class="card-title">Monthly Income</h3>
@@ -37,10 +131,10 @@
                         <i class="fas fa-ellipsis-h"></i>
                     </button>
                 </div>
-                <div class="amount income-amount">Rs 2000</div>
-                <div class="change">
-                    <i class="fas fa-arrow-up"> </i>
-                    12% vs last month
+                <div class="amount income-amount" id="total-income">Rs 0</div>
+                <div class="change" id="income-change">
+                    <i class="fas fa-arrow-up"></i>
+                    0% vs last month
                 </div>
             </div>
 
@@ -51,20 +145,127 @@
                         <i class="fas fa-ellipsis-h"></i>
                     </button>
                 </div>
-                <div class="amount income-amount">Rs 1800</div>
-                <div class="change">
-                    <i class="fas fa-arrow-up"> </i>
-                    12% vs last month
+                <div class="amount expense-amount" id="total-expenses">Rs 0</div>
+                <div class="change expense-change" id="expense-change">
+                    <i class="fas fa-arrow-up"></i>
+                    0% vs last month
                 </div>
             </div>
 
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Balance</h3>
+                    <button class="card-menu">
+                        <i class="fas fa-ellipsis-h"></i>
+                    </button>
+                </div>
+                <div class="amount balance-amount" id="balance">Rs 0</div>
+                <div class="change positive" id="balance-status">
+                    Healthy
+                </div>
+            </div>
+        </div>
+
+        <!-- Expense Entry Section -->
+        <div class="expense-section">
+            <div class="section-card">
+                <div class="section-header">
+                    <h2><i class="fas fa-plus-circle"></i> Add New Expense</h2>
+                    <button class="btn-toggle" onclick="toggleExpenseForm()">
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                </div>
+                <form id="expense-form" class="expense-form">
+                    <div class="form-row">
+                        <div class="form-field">
+                            <label for="expense-amount">Amount (Rs)*</label>
+                            <input type="number" id="expense-amount" placeholder="0.00" step="0.01" min="0" required>
+                        </div>
+                        <div class="form-field">
+                            <label for="expense-category">Category*</label>
+                            <select id="expense-category" required>
+                                <option value="">Select Category</option>
+                                <option value="groceries">🛒 Groceries</option>
+                                <option value="utilities">💡 Utilities</option>
+                                <option value="entertainment">🎬 Entertainment</option>
+                                <option value="transportation">🚗 Transportation</option>
+                                <option value="healthcare">⚕️ Healthcare</option>
+                                <option value="education">📚 Education</option>
+                                <option value="dining">🍽️ Dining Out</option>
+                                <option value="shopping">🛍️ Shopping</option>
+                                <option value="rent">🏠 Rent/Mortgage</option>
+                                <option value="insurance">🛡️ Insurance</option>
+                                <option value="other">📝 Other</option>
+                            </select>
+                        </div>
+                        <div class="form-field">
+                            <label for="expense-date">Date*</label>
+                            <input type="date" id="expense-date" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-field full-width">
+                            <label for="expense-description">Description (Optional)</label>
+                            <input type="text" id="expense-description" placeholder="Add a note about this expense...">
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary">
+                            <i class="fas fa-save"></i> Add Expense
+                        </button>
+                        <button type="reset" class="btn-reset">
+                            <i class="fas fa-undo"></i> Clear
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Expense List Section -->
+        <div class="expenses-list-section">
+            <div class="section-card">
+                <div class="section-header">
+                    <h2><i class="fas fa-list"></i> Recent Expenses</h2>
+                    <div class="filter-controls">
+                        <select id="filter-category" onchange="filterExpenses()">
+                            <option value="all">All Categories</option>
+                            <option value="groceries">Groceries</option>
+                            <option value="utilities">Utilities</option>
+                            <option value="entertainment">Entertainment</option>
+                            <option value="transportation">Transportation</option>
+                            <option value="healthcare">Healthcare</option>
+                            <option value="education">Education</option>
+                            <option value="dining">Dining Out</option>
+                            <option value="shopping">Shopping</option>
+                            <option value="rent">Rent/Mortgage</option>
+                            <option value="insurance">Insurance</option>
+                            <option value="other">Other</option>
+                        </select>
+                        <select id="sort-by" onchange="filterExpenses()">
+                            <option value="date-desc">Newest First</option>
+                            <option value="date-asc">Oldest First</option>
+                            <option value="amount-desc">Highest Amount</option>
+                            <option value="amount-asc">Lowest Amount</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="expenses-list" id="expenses-list">
+                    <div class="empty-state">
+                        <i class="fas fa-inbox"></i>
+                        <p>No expenses recorded yet</p>
+                        <p class="empty-subtitle">Start by adding your first expense above</p>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
 
 
     </div>
+    </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <script src="script.js"></script>
 
 </body>
