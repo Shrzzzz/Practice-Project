@@ -4,32 +4,126 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Practice Project</title>
+    <title>Personal Expense Tracker</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
-    <title>Personal Expense Tracker</title>
 </head>
 
 <body>
-    <div class="header">
-        <h1>Good Morning Shristi!</h1>
-        <div class="header-controls">
-            <div class="dropdown">
-                Daily<i class="fas fa-chevron-down"></i>
+    <!-- Authentication Container -->
+    <div id="auth-container" class="auth-container">
+        <!-- Login Form -->
+        <div id="login-form" class="auth-form active">
+            <div class="auth-card">
+                <h2>Welcome Back</h2>
+                <p class="auth-subtitle">Sign in to your expense tracker</p>
+                <form id="login-submit" class="form-group">
+                    <div class="form-control">
+                        <label for="login-email">Email Address</label>
+                        <input type="email" id="login-email" placeholder="Enter your email" required>
+                        <span class="error-message" id="login-email-error"></span>
+                    </div>
+                    <div class="form-control">
+                        <label for="login-password">Password</label>
+                        <div class="password-input-group">
+                            <input type="password" id="login-password" placeholder="Enter your password" required>
+                            <button type="button" class="toggle-password" onclick="togglePassword('login-password')">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                        <span class="error-message" id="login-password-error"></span>
+                    </div>
+                    <button type="submit" class="btn-auth">Sign In</button>
+                </form>
+                <p class="auth-toggle">Don't have an account? <a href="#" onclick="toggleAuthForms()">Sign up</a></p>
             </div>
-            <div class="date-picker">
-                <i class="fas fa-calendar"></i>
-                15-01-2026
+        </div>
+
+        <!-- Registration Form -->
+        <div id="register-form" class="auth-form">
+            <div class="auth-card">
+                <h2>Create Account</h2>
+                <p class="auth-subtitle">Start managing your finances today</p>
+                <form id="register-submit" class="form-group">
+                    <div class="form-control">
+                        <label for="register-name">Full Name</label>
+                        <input type="text" id="register-name" placeholder="Enter your full name" required>
+                        <span class="error-message" id="register-name-error"></span>
+                    </div>
+                    <div class="form-control">
+                        <label for="register-email">Email Address</label>
+                        <input type="email" id="register-email" placeholder="Enter your email" required>
+                        <span class="error-message" id="register-email-error"></span>
+                    </div>
+                    <div class="form-control">
+                        <label for="register-password">Password</label>
+                        <div class="password-input-group">
+                            <input type="password" id="register-password" placeholder="Create a password (min 8 characters)" required>
+                            <button type="button" class="toggle-password" onclick="togglePassword('register-password')">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                        <span class="error-message" id="register-password-error"></span>
+                    </div>
+                    <div class="form-control">
+                        <label for="register-confirm">Confirm Password</label>
+                        <div class="password-input-group">
+                            <input type="password" id="register-confirm" placeholder="Confirm your password" required>
+                            <button type="button" class="toggle-password" onclick="togglePassword('register-confirm')">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                        <span class="error-message" id="register-confirm-error"></span>
+                    </div>
+                    <button type="submit" class="btn-auth">Create Account</button>
+                </form>
+                <p class="auth-toggle">Already have an account? <a href="#" onclick="toggleAuthForms()">Sign in</a></p>
             </div>
-            <div class="export-btn">
-                <i class="fas fa-download"></i>
-                Export
+        </div>
+
+        <!-- Email Verification Form -->
+        <div id="verify-form" class="auth-form">
+            <div class="auth-card">
+                <h2>Verify Email</h2>
+                <p class="auth-subtitle">Enter the 6-digit code sent to your email</p>
+                <form id="verify-submit" class="form-group">
+                    <div class="form-control">
+                        <label for="verify-code">Verification Code</label>
+                        <input type="text" id="verify-code" placeholder="Enter 6-digit code" maxlength="6" required>
+                        <span class="error-message" id="verify-code-error"></span>
+                    </div>
+                    <button type="submit" class="btn-auth">Verify Email</button>
+                    <button type="button" class="btn-secondary" onclick="goBackToLogin()">Go Back</button>
+                </form>
             </div>
         </div>
     </div>
+
+    <!-- Main Dashboard (Hidden until authenticated) -->
+    <div id="dashboard" class="dashboard-container" style="display: none;">
+            <div class="header-content">
+            <h1 id="greeting">Good Morning!</h1>
+            <div class="header-controls">
+                <div class="dropdown">
+                    Daily<i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="date-picker">
+                    <i class="fas fa-calendar"></i>
+                    <span id="current-date">15-01-2026</span>
+                </div>
+                <div class="export-btn">
+                    <i class="fas fa-download"></i>
+                    Export
+                </div>
+                <button id="logout-btn" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Logout
+                </button>
+            </div>
+        </div>
     <div class="main-content">
+        <!-- Summary Cards -->
         <div class="dashboard-grid">
-           
             <div class="card">
                 <div class="card-header">
                     <h3 class="card-title">Monthly Income</h3>
@@ -37,10 +131,10 @@
                         <i class="fas fa-ellipsis-h"></i>
                     </button>
                 </div>
-                <div class="amount income-amount">Rs 2000</div>
-                <div class="change">
-                    <i class="fas fa-arrow-up"> </i>
-                    12% vs last month
+                <div class="amount income-amount" id="total-income">Rs 0</div>
+                <div class="change" id="income-change">
+                    <i class="fas fa-arrow-up"></i>
+                    0% vs last month
                 </div>
             </div>
 
@@ -51,20 +145,279 @@
                         <i class="fas fa-ellipsis-h"></i>
                     </button>
                 </div>
-                <div class="amount income-amount">Rs 1800</div>
-                <div class="change">
-                    <i class="fas fa-arrow-up"> </i>
-                    12% vs last month
+                <div class="amount expense-amount" id="total-expenses">Rs 0</div>
+                <div class="change expense-change" id="expense-change">
+                    <i class="fas fa-arrow-up"></i>
+                    0% vs last month
                 </div>
             </div>
 
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Balance</h3>
+                    <button class="card-menu">
+                        <i class="fas fa-ellipsis-h"></i>
+                    </button>
+                </div>
+                <div class="amount balance-amount" id="balance">Rs 0</div>
+                <div class="change positive" id="balance-status">
+                    Healthy
+                </div>
+            </div>
+        </div>
+
+        <!-- Income Entry Section -->
+        <div class="income-section">
+            <div class="section-card">
+                <div class="section-header">
+                    <h2><i class="fas fa-plus-circle"></i> Add Income</h2>
+                    <button class="btn-toggle" onclick="toggleIncomeForm()">
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                </div>
+                <form id="income-form" class="expense-form">
+                    <div class="form-row">
+                        <div class="form-field">
+                            <label for="income-amount">Amount (Rs)*</label>
+                            <input type="number" id="income-amount" placeholder="0.00" step="0.01" min="0" required>
+                        </div>
+                        <div class="form-field">
+                            <label for="income-source">Source*</label>
+                            <select id="income-source" required>
+                                <option value="">Select Source</option>
+                                <option value="salary">💼 Salary</option>
+                                <option value="freelance">💻 Freelance</option>
+                                <option value="business">🏢 Business</option>
+                                <option value="investment">📈 Investment</option>
+                                <option value="rental">🏘️ Rental Income</option>
+                                <option value="gift">🎁 Gift</option>
+                                <option value="bonus">🎉 Bonus</option>
+                                <option value="refund">↩️ Refund</option>
+                                <option value="other">📝 Other</option>
+                            </select>
+                        </div>
+                        <div class="form-field">
+                            <label for="income-date">Date*</label>
+                            <input type="date" id="income-date" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-field full-width">
+                            <label for="income-description">Description (Optional)</label>
+                            <input type="text" id="income-description" placeholder="Add a note about this income...">
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary btn-income">
+                            <i class="fas fa-save"></i> Add Income
+                        </button>
+                        <button type="reset" class="btn-reset">
+                            <i class="fas fa-undo"></i> Clear
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Expense Entry Section -->
+        <div class="expense-section">
+            <div class="section-card">
+                <div class="section-header">
+                    <h2><i class="fas fa-plus-circle"></i> Add New Expense</h2>
+                    <button class="btn-toggle" onclick="toggleExpenseForm()">
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                </div>
+                <form id="expense-form" class="expense-form">
+                    <div class="form-row">
+                        <div class="form-field">
+                            <label for="expense-amount">Amount (Rs)*</label>
+                            <input type="number" id="expense-amount" placeholder="0.00" step="0.01" min="0" required>
+                        </div>
+                        <div class="form-field">
+                            <label for="expense-category">Category*</label>
+                            <select id="expense-category" required>
+                                <option value="">Select Category</option>
+                                <option value="groceries">🛒 Groceries</option>
+                                <option value="utilities">💡 Utilities</option>
+                                <option value="entertainment">🎬 Entertainment</option>
+                                <option value="transportation">🚗 Transportation</option>
+                                <option value="healthcare">⚕️ Healthcare</option>
+                                <option value="education">📚 Education</option>
+                                <option value="dining">🍽️ Dining Out</option>
+                                <option value="shopping">🛍️ Shopping</option>
+                                <option value="rent">🏠 Rent/Mortgage</option>
+                                <option value="insurance">🛡️ Insurance</option>
+                                <option value="other">📝 Other</option>
+                            </select>
+                        </div>
+                        <div class="form-field">
+                            <label for="expense-date">Date*</label>
+                            <input type="date" id="expense-date" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-field full-width">
+                            <label for="expense-description">Description (Optional)</label>
+                            <input type="text" id="expense-description" placeholder="Add a note about this expense...">
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary">
+                            <i class="fas fa-save"></i> Add Expense
+                        </button>
+                        <button type="reset" class="btn-reset">
+                            <i class="fas fa-undo"></i> Clear
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Expense List Section -->
+        <div class="expenses-list-section">
+            <div class="section-card">
+                <div class="section-header">
+                    <h2><i class="fas fa-list"></i> Recent Expenses</h2>
+                    <div class="filter-controls">
+                        <select id="filter-category" onchange="filterExpenses()">
+                            <option value="all">All Categories</option>
+                            <option value="groceries">Groceries</option>
+                            <option value="utilities">Utilities</option>
+                            <option value="entertainment">Entertainment</option>
+                            <option value="transportation">Transportation</option>
+                            <option value="healthcare">Healthcare</option>
+                            <option value="education">Education</option>
+                            <option value="dining">Dining Out</option>
+                            <option value="shopping">Shopping</option>
+                            <option value="rent">Rent/Mortgage</option>
+                            <option value="insurance">Insurance</option>
+                            <option value="other">Other</option>
+                        </select>
+                        <select id="sort-by" onchange="filterExpenses()">
+                            <option value="date-desc">Newest First</option>
+                            <option value="date-asc">Oldest First</option>
+                            <option value="amount-desc">Highest Amount</option>
+                            <option value="amount-asc">Lowest Amount</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="expenses-list" id="expenses-list">
+                    <div class="empty-state">
+                        <i class="fas fa-inbox"></i>
+                        <p>No expenses recorded yet</p>
+                        <p class="empty-subtitle">Start by adding your first expense above</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Transaction History Section -->
+        <div class="transaction-history-section">
+            <div class="section-card">
+                <div class="section-header">
+                    <h2><i class="fas fa-history"></i> Transaction History</h2>
+                    <button class="btn-primary" onclick="showTransactionHistory()">
+                        <i class="fas fa-eye"></i> View Full History
+                    </button>
+                </div>
+                
+                <!-- Search and Filter Controls -->
+                <div class="transaction-controls">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="transaction-search" placeholder="Search transactions..." onkeyup="searchTransactions()">
+                    </div>
+                    <div class="filter-row">
+                        <div class="filter-group">
+                            <label>Type:</label>
+                            <select id="transaction-type" onchange="filterTransactions()">
+                                <option value="all">All</option>
+                                <option value="income">Income Only</option>
+                                <option value="expense">Expenses Only</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Date Range:</label>
+                            <select id="date-range" onchange="filterByDateRange()">
+                                <option value="all">All Time</option>
+                                <option value="today">Today</option>
+                                <option value="week">This Week</option>
+                                <option value="month">This Month</option>
+                                <option value="quarter">This Quarter</option>
+                                <option value="year">This Year</option>
+                                <option value="custom">Custom Range</option>
+                            </select>
+                        </div>
+                        <div class="filter-group" id="custom-date-range" style="display: none;">
+                            <label>From:</label>
+                            <input type="date" id="date-from">
+                            <label>To:</label>
+                            <input type="date" id="date-to">
+                            <button class="btn-apply" onclick="applyCustomDateRange()">Apply</button>
+                        </div>
+                        <div class="filter-group">
+                            <label>Amount:</label>
+                            <select id="amount-filter" onchange="filterTransactions()">
+                                <option value="all">All Amounts</option>
+                                <option value="0-500">Rs 0 - 500</option>
+                                <option value="500-1000">Rs 500 - 1,000</option>
+                                <option value="1000-5000">Rs 1,000 - 5,000</option>
+                                <option value="5000+">Rs 5,000+</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Transaction Summary Stats -->
+                <div class="transaction-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">Total Transactions:</span>
+                        <span class="stat-value" id="total-transactions">0</span>
+                    </div>
+                    <div class="stat-item stat-income">
+                        <span class="stat-label">Total Income:</span>
+                        <span class="stat-value" id="total-income-history">Rs 0</span>
+                    </div>
+                    <div class="stat-item stat-expense">
+                        <span class="stat-label">Total Expenses:</span>
+                        <span class="stat-value" id="total-expense-history">Rs 0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Net:</span>
+                        <span class="stat-value" id="net-amount">Rs 0</span>
+                    </div>
+                </div>
+
+                <!-- Transaction List -->
+                <div class="transaction-list" id="transaction-list">
+                    <div class="empty-state">
+                        <i class="fas fa-receipt"></i>
+                        <p>No transactions found</p>
+                        <p class="empty-subtitle">Add income or expenses to see your transaction history</p>
+                    </div>
+                </div>
+
+                <!-- Pagination -->
+                <div class="pagination" id="pagination" style="display: none;">
+                    <button class="btn-page" onclick="previousPage()" id="prev-btn">
+                        <i class="fas fa-chevron-left"></i> Previous
+                    </button>
+                    <span class="page-info" id="page-info">Page 1 of 1</span>
+                    <button class="btn-page" onclick="nextPage()" id="next-btn">
+                        Next <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
 
 
     </div>
+    </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <script src="script.js"></script>
 
 </body>
