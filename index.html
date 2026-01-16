@@ -166,6 +166,59 @@
             </div>
         </div>
 
+        <!-- Income Entry Section -->
+        <div class="income-section">
+            <div class="section-card">
+                <div class="section-header">
+                    <h2><i class="fas fa-plus-circle"></i> Add Income</h2>
+                    <button class="btn-toggle" onclick="toggleIncomeForm()">
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                </div>
+                <form id="income-form" class="expense-form">
+                    <div class="form-row">
+                        <div class="form-field">
+                            <label for="income-amount">Amount (Rs)*</label>
+                            <input type="number" id="income-amount" placeholder="0.00" step="0.01" min="0" required>
+                        </div>
+                        <div class="form-field">
+                            <label for="income-source">Source*</label>
+                            <select id="income-source" required>
+                                <option value="">Select Source</option>
+                                <option value="salary">💼 Salary</option>
+                                <option value="freelance">💻 Freelance</option>
+                                <option value="business">🏢 Business</option>
+                                <option value="investment">📈 Investment</option>
+                                <option value="rental">🏘️ Rental Income</option>
+                                <option value="gift">🎁 Gift</option>
+                                <option value="bonus">🎉 Bonus</option>
+                                <option value="refund">↩️ Refund</option>
+                                <option value="other">📝 Other</option>
+                            </select>
+                        </div>
+                        <div class="form-field">
+                            <label for="income-date">Date*</label>
+                            <input type="date" id="income-date" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-field full-width">
+                            <label for="income-description">Description (Optional)</label>
+                            <input type="text" id="income-description" placeholder="Add a note about this income...">
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary btn-income">
+                            <i class="fas fa-save"></i> Add Income
+                        </button>
+                        <button type="reset" class="btn-reset">
+                            <i class="fas fa-undo"></i> Clear
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
         <!-- Expense Entry Section -->
         <div class="expense-section">
             <div class="section-card">
@@ -255,6 +308,105 @@
                         <p>No expenses recorded yet</p>
                         <p class="empty-subtitle">Start by adding your first expense above</p>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Transaction History Section -->
+        <div class="transaction-history-section">
+            <div class="section-card">
+                <div class="section-header">
+                    <h2><i class="fas fa-history"></i> Transaction History</h2>
+                    <button class="btn-primary" onclick="showTransactionHistory()">
+                        <i class="fas fa-eye"></i> View Full History
+                    </button>
+                </div>
+                
+                <!-- Search and Filter Controls -->
+                <div class="transaction-controls">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="transaction-search" placeholder="Search transactions..." onkeyup="searchTransactions()">
+                    </div>
+                    <div class="filter-row">
+                        <div class="filter-group">
+                            <label>Type:</label>
+                            <select id="transaction-type" onchange="filterTransactions()">
+                                <option value="all">All</option>
+                                <option value="income">Income Only</option>
+                                <option value="expense">Expenses Only</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Date Range:</label>
+                            <select id="date-range" onchange="filterByDateRange()">
+                                <option value="all">All Time</option>
+                                <option value="today">Today</option>
+                                <option value="week">This Week</option>
+                                <option value="month">This Month</option>
+                                <option value="quarter">This Quarter</option>
+                                <option value="year">This Year</option>
+                                <option value="custom">Custom Range</option>
+                            </select>
+                        </div>
+                        <div class="filter-group" id="custom-date-range" style="display: none;">
+                            <label>From:</label>
+                            <input type="date" id="date-from">
+                            <label>To:</label>
+                            <input type="date" id="date-to">
+                            <button class="btn-apply" onclick="applyCustomDateRange()">Apply</button>
+                        </div>
+                        <div class="filter-group">
+                            <label>Amount:</label>
+                            <select id="amount-filter" onchange="filterTransactions()">
+                                <option value="all">All Amounts</option>
+                                <option value="0-500">Rs 0 - 500</option>
+                                <option value="500-1000">Rs 500 - 1,000</option>
+                                <option value="1000-5000">Rs 1,000 - 5,000</option>
+                                <option value="5000+">Rs 5,000+</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Transaction Summary Stats -->
+                <div class="transaction-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">Total Transactions:</span>
+                        <span class="stat-value" id="total-transactions">0</span>
+                    </div>
+                    <div class="stat-item stat-income">
+                        <span class="stat-label">Total Income:</span>
+                        <span class="stat-value" id="total-income-history">Rs 0</span>
+                    </div>
+                    <div class="stat-item stat-expense">
+                        <span class="stat-label">Total Expenses:</span>
+                        <span class="stat-value" id="total-expense-history">Rs 0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Net:</span>
+                        <span class="stat-value" id="net-amount">Rs 0</span>
+                    </div>
+                </div>
+
+                <!-- Transaction List -->
+                <div class="transaction-list" id="transaction-list">
+                    <div class="empty-state">
+                        <i class="fas fa-receipt"></i>
+                        <p>No transactions found</p>
+                        <p class="empty-subtitle">Add income or expenses to see your transaction history</p>
+                    </div>
+                </div>
+
+                <!-- Pagination -->
+                <div class="pagination" id="pagination" style="display: none;">
+                    <button class="btn-page" onclick="previousPage()" id="prev-btn">
+                        <i class="fas fa-chevron-left"></i> Previous
+                    </button>
+                    <span class="page-info" id="page-info">Page 1 of 1</span>
+                    <button class="btn-page" onclick="nextPage()" id="next-btn">
+                        Next <i class="fas fa-chevron-right"></i>
+                    </button>
                 </div>
             </div>
         </div>

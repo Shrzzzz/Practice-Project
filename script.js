@@ -390,13 +390,18 @@ document.addEventListener('mousemove', resetInactivityTimer);
 // ===== EXPENSE TRACKING SYSTEM =====
 
 let currentExpenses = [];
+let currentIncome = [];
 let currentFilter = 'all';
 let currentSort = 'date-desc';
+let currentPage = 1;
+let itemsPerPage = 10;
+let filteredTransactions = [];
 
 function initializeExpenseTracker() {
     // Set today's date as default
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('expense-date').value = today;
+    document.getElementById('income-date').value = today;
 
     // Setup expense form submission
     const expenseForm = document.getElementById('expense-form');
@@ -404,9 +409,31 @@ function initializeExpenseTracker() {
         expenseForm.addEventListener('submit', handleAddExpense);
     }
 
-    // Load existing expenses
+    // Setup income form submission
+    const incomeForm = document.getElementById('income-form');
+    if (incomeForm) {
+        incomeForm.addEventListener('submit', handleAddIncome);
+    }
+
+    // Setup date range change
+    const dateRangeSelect = document.getElementById('date-range');
+    if (dateRangeSelect) {
+        dateRangeSelect.addEventListener('change', function() {
+            const customRange = document.getElementById('custom-date-range');
+            if (this.value === 'custom') {
+                customRange.style.display = 'flex';
+            } else {
+                customRange.style.display = 'none';
+                filterTransactions();
+            }
+        });
+    }
+
+    // Load existing data
     loadExpenses();
+    loadIncome();
     updateDashboardSummary();
+    loadTransactionHistory();
 }
 
 // ===== ADD EXPENSE =====
@@ -446,6 +473,66 @@ function handleAddExpense(e) {
     // Reload expenses list
     loadExpenses();
     updateDashboardSummary();
+    loadTransactionHistory();
+}
+
+// ===== ADD INCOME =====
+function handleAddIncome(e) {
+    e.preventDefault();
+
+    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+    if (!currentUser) return;
+
+    // Get form values
+    const amount = parseFloat(document.getElementById('income-amount').value);
+    const source = document.getElementById('income-source').value;
+    const date = document.getElementById('income-date').value;
+    const description = document.getElementById('income-description').value.trim() || 'No description';
+
+    // Create income object
+    const income = {
+        id: generateIncomeId(),
+        userId: currentUser.id,
+        amount: amount,
+        source: source,
+        date: date,
+        description: description,
+        createdAt: new Date().toISOString()
+    };
+
+    // Save income
+    saveIncome(income);
+
+    // Show success message
+    showToast('Income added successfully!', 'success');
+
+    // Reset form
+    document.getElementById('income-form').reset();
+    document.getElementById('income-date').value = new Date().toISOString().split('T')[0];
+
+    // Reload data
+    loadIncome();
+    updateDashboardSummary();
+    loadTransactionHistory();
+}
+
+// ===== SAVE INCOME =====
+function saveIncome(income) {
+    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+    const storageKey = `income_${currentUser.id}`;
+    
+    let incomeList = JSON.parse(localStorage.getItem(storageKey)) || [];
+    incomeList.push(income);
+    localStorage.setItem(storageKey, JSON.stringify(incomeList));
+}
+
+// ===== LOAD INCOME =====
+function loadIncome() {
+    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+    if (!currentUser) return;
+
+    const storageKey = `income_${currentUser.id}`;
+    currentIncome = JSON.parse(localStorage.getItem(storageKey)) || [];
 }
 
 // ===== SAVE EXPENSE =====
@@ -546,6 +633,7 @@ function deleteExpense(expenseId) {
     showToast('Expense deleted successfully!', 'success');
     loadExpenses();
     updateDashboardSummary();
+    loadTransactionHistory();
 }
 
 // ===== EDIT EXPENSE =====
@@ -599,11 +687,19 @@ function updateDashboardSummary() {
 
     const totalExpenses = monthlyExpenses.reduce((sum, exp) => sum + exp.amount, 0);
 
-    // Update display (you can later add income tracking)
-    document.getElementById('total-expenses').textContent = `Rs ${totalExpenses.toFixed(2)}`;
+    // Update display
+    // Load income data
+    const incomeStorageKey = `income_${currentUser.id}`;
+    const incomeList = JSON.parse(localStorage.getItem(incomeStorageKey)) || [];
     
-    // For now, set a default income (you'll implement income tracking later)
-    const totalIncome = 0; // Will be updated when income tracking is implemented
+    const monthlyIncome = incomeList.filter(inc => {
+        const incDate = new Date(inc.date);
+        return incDate.getMonth() === currentMonth && incDate.getFullYear() === currentYear;
+    });
+
+    const totalIncome = monthlyIncome.reduce((sum, inc) => sum + inc.amount, 0);
+    
+    document.getElementById('total-expenses').textContent = `Rs ${totalExpenses.toFixed(2)}`;
     document.getElementById('total-income').textContent = `Rs ${totalIncome.toFixed(2)}`;
     
     const balance = totalIncome - totalExpenses;
@@ -655,9 +751,27 @@ function toggleExpenseForm() {
     }
 }
 
+// ===== TOGGLE INCOME FORM =====
+function toggleIncomeForm() {
+    const form = document.getElementById('income-form');
+    const button = event.currentTarget;
+    
+    if (form.style.display === 'none') {
+        form.style.display = 'flex';
+        button.classList.remove('active');
+    } else {
+        form.style.display = 'none';
+        button.classList.add('active');
+    }
+}
+
 // ===== UTILITY FUNCTIONS FOR EXPENSES =====
 function generateExpenseId() {
     return 'exp_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+}
+
+function generateIncomeId() {
+    return 'inc_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
 }
 
 function getCategoryIcon(category) {
@@ -679,6 +793,25 @@ function getCategoryIcon(category) {
 
 function formatCategoryName(category) {
     return category.charAt(0).toUpperCase() + category.slice(1);
+}
+
+function getSourceIcon(source) {
+    const icons = {
+        salary: '💼',
+        freelance: '💻',
+        business: '🏢',
+        investment: '📈',
+        rental: '🏘️',
+        gift: '🎁',
+        bonus: '🎉',
+        refund: '↩️',
+        other: '📝'
+    };
+    return icons[source] || '📝';
+}
+
+function formatSourceName(source) {
+    return source.charAt(0).toUpperCase() + source.slice(1);
 }
 
 function formatDisplayDate(dateString) {
@@ -747,3 +880,355 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
+
+// ===== TRANSACTION HISTORY =====
+
+function loadTransactionHistory() {
+    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+    if (!currentUser) return;
+
+    // Combine expenses and income into transactions
+    const transactions = [];
+    
+    // Add expenses
+    currentExpenses.forEach(exp => {
+        transactions.push({
+            ...exp,
+            type: 'expense',
+            categoryOrSource: exp.category
+        });
+    });
+
+    // Add income
+    currentIncome.forEach(inc => {
+        transactions.push({
+            ...inc,
+            type: 'income',
+            categoryOrSource: inc.source
+        });
+    });
+
+    // Sort by date (newest first)
+    transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    filteredTransactions = transactions;
+    displayTransactionHistory();
+}
+
+function displayTransactionHistory() {
+    const transactionList = document.getElementById('transaction-list');
+    const pagination = document.getElementById('pagination');
+    
+    if (filteredTransactions.length === 0) {
+        transactionList.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-receipt"></i>
+                <p>No transactions found</p>
+                <p class="empty-subtitle">Add income or expenses to see your transaction history</p>
+            </div>
+        `;
+        pagination.style.display = 'none';
+        updateTransactionStats([], 0, 0);
+        return;
+    }
+
+    // Pagination
+    const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const paginatedTransactions = filteredTransactions.slice(startIndex, endIndex);
+
+    // Display transactions
+    transactionList.innerHTML = paginatedTransactions.map(transaction => {
+        const isIncome = transaction.type === 'income';
+        const categoryOrSource = isIncome ? transaction.source : transaction.category;
+        const icon = isIncome ? getSourceIcon(categoryOrSource) : getCategoryIcon(categoryOrSource);
+        const name = isIncome ? formatSourceName(categoryOrSource) : formatCategoryName(categoryOrSource);
+        
+        return `
+            <div class="transaction-item ${transaction.type}">
+                <div class="transaction-info">
+                    <span class="transaction-type-badge ${transaction.type}">
+                        ${isIncome ? '⬆️' : '⬇️'} ${transaction.type.toUpperCase()}
+                    </span>
+                    <div class="transaction-category">
+                        <span class="expense-category-badge ${isIncome ? 'source' : 'category'}-${categoryOrSource}">
+                            ${icon} ${name}
+                        </span>
+                    </div>
+                    <div class="transaction-description">${transaction.description}</div>
+                    <div class="transaction-date">
+                        <i class="fas fa-calendar-alt"></i> ${formatDisplayDate(transaction.date)}
+                    </div>
+                </div>
+                <div class="transaction-amount-display ${transaction.type}">
+                    ${isIncome ? '+' : '-'} Rs ${transaction.amount.toFixed(2)}
+                </div>
+                <div class="expense-actions">
+                    <button class="btn-icon btn-delete" onclick="deleteTransaction('${transaction.id}', '${transaction.type}')" title="Delete">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    // Update pagination
+    if (totalPages > 1) {
+        pagination.style.display = 'flex';
+        document.getElementById('page-info').textContent = `Page ${currentPage} of ${totalPages}`;
+        document.getElementById('prev-btn').disabled = currentPage === 1;
+        document.getElementById('next-btn').disabled = currentPage === totalPages;
+    } else {
+        pagination.style.display = 'none';
+    }
+
+    // Calculate and update stats
+    const totalIncome = filteredTransactions
+        .filter(t => t.type === 'income')
+        .reduce((sum, t) => sum + t.amount, 0);
+    
+    const totalExpense = filteredTransactions
+        .filter(t => t.type === 'expense')
+        .reduce((sum, t) => sum + t.amount, 0);
+
+    updateTransactionStats(filteredTransactions.length, totalIncome, totalExpense);
+}
+
+function updateTransactionStats(count, income, expense) {
+    document.getElementById('total-transactions').textContent = count;
+    document.getElementById('total-income-history').textContent = `Rs ${income.toFixed(2)}`;
+    document.getElementById('total-expense-history').textContent = `Rs ${expense.toFixed(2)}`;
+    
+    const net = income - expense;
+    const netElement = document.getElementById('net-amount');
+    netElement.textContent = `Rs ${net.toFixed(2)}`;
+    netElement.style.color = net >= 0 ? '#10b981' : '#ef4444';
+}
+
+function deleteTransaction(id, type) {
+    if (!confirm('Are you sure you want to delete this transaction?')) return;
+
+    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+    
+    if (type === 'expense') {
+        const storageKey = `expenses_${currentUser.id}`;
+        let expenses = JSON.parse(localStorage.getItem(storageKey)) || [];
+        expenses = expenses.filter(exp => exp.id !== id);
+        localStorage.setItem(storageKey, JSON.stringify(expenses));
+        loadExpenses();
+    } else {
+        const storageKey = `income_${currentUser.id}`;
+        let income = JSON.parse(localStorage.getItem(storageKey)) || [];
+        income = income.filter(inc => inc.id !== id);
+        localStorage.setItem(storageKey, JSON.stringify(income));
+        loadIncome();
+    }
+
+    showToast('Transaction deleted successfully!', 'success');
+    updateDashboardSummary();
+    loadTransactionHistory();
+}
+
+// ===== SEARCH TRANSACTIONS =====
+function searchTransactions() {
+    const searchTerm = document.getElementById('transaction-search').value.toLowerCase();
+    
+    if (!searchTerm) {
+        filterTransactions();
+        return;
+    }
+
+    const allTransactions = [];
+    
+    currentExpenses.forEach(exp => {
+        allTransactions.push({
+            ...exp,
+            type: 'expense',
+            categoryOrSource: exp.category
+        });
+    });
+
+    currentIncome.forEach(inc => {
+        allTransactions.push({
+            ...inc,
+            type: 'income',
+            categoryOrSource: inc.source
+        });
+    });
+
+    filteredTransactions = allTransactions.filter(transaction => {
+        return (
+            transaction.description.toLowerCase().includes(searchTerm) ||
+            transaction.categoryOrSource.toLowerCase().includes(searchTerm) ||
+            transaction.amount.toString().includes(searchTerm) ||
+            transaction.date.includes(searchTerm)
+        );
+    });
+
+    currentPage = 1;
+    displayTransactionHistory();
+}
+
+// ===== FILTER TRANSACTIONS =====
+function filterTransactions() {
+    const typeFilter = document.getElementById('transaction-type').value;
+    const amountFilter = document.getElementById('amount-filter').value;
+    const dateRange = document.getElementById('date-range').value;
+
+    let transactions = [];
+    
+    currentExpenses.forEach(exp => {
+        transactions.push({
+            ...exp,
+            type: 'expense',
+            categoryOrSource: exp.category
+        });
+    });
+
+    currentIncome.forEach(inc => {
+        transactions.push({
+            ...inc,
+            type: 'income',
+            categoryOrSource: inc.source
+        });
+    });
+
+    // Filter by type
+    if (typeFilter !== 'all') {
+        transactions = transactions.filter(t => t.type === typeFilter);
+    }
+
+    // Filter by amount
+    if (amountFilter !== 'all') {
+        transactions = transactions.filter(t => {
+            const amount = t.amount;
+            switch(amountFilter) {
+                case '0-500':
+                    return amount <= 500;
+                case '500-1000':
+                    return amount > 500 && amount <= 1000;
+                case '1000-5000':
+                    return amount > 1000 && amount <= 5000;
+                case '5000+':
+                    return amount > 5000;
+                default:
+                    return true;
+            }
+        });
+    }
+
+    // Filter by date range
+    if (dateRange !== 'all' && dateRange !== 'custom') {
+        transactions = filterByDateRange(transactions, dateRange);
+    }
+
+    filteredTransactions = transactions;
+    currentPage = 1;
+    displayTransactionHistory();
+}
+
+function filterByDateRange(transactions, range) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    return transactions.filter(t => {
+        const transactionDate = new Date(t.date);
+        transactionDate.setHours(0, 0, 0, 0);
+
+        switch(range) {
+            case 'today':
+                return transactionDate.getTime() === today.getTime();
+            
+            case 'week':
+                const weekAgo = new Date(today);
+                weekAgo.setDate(today.getDate() - 7);
+                return transactionDate >= weekAgo;
+            
+            case 'month':
+                return transactionDate.getMonth() === today.getMonth() &&
+                       transactionDate.getFullYear() === today.getFullYear();
+            
+            case 'quarter':
+                const quarter = Math.floor(today.getMonth() / 3);
+                const transactionQuarter = Math.floor(transactionDate.getMonth() / 3);
+                return transactionQuarter === quarter &&
+                       transactionDate.getFullYear() === today.getFullYear();
+            
+            case 'year':
+                return transactionDate.getFullYear() === today.getFullYear();
+            
+            default:
+                return true;
+        }
+    });
+}
+
+function applyCustomDateRange() {
+    const dateFrom = document.getElementById('date-from').value;
+    const dateTo = document.getElementById('date-to').value;
+
+    if (!dateFrom || !dateTo) {
+        showToast('Please select both from and to dates', 'info');
+        return;
+    }
+
+    const fromDate = new Date(dateFrom);
+    const toDate = new Date(dateTo);
+
+    if (fromDate > toDate) {
+        showToast('From date must be before to date', 'info');
+        return;
+    }
+
+    let transactions = [];
+    
+    currentExpenses.forEach(exp => {
+        transactions.push({
+            ...exp,
+            type: 'expense',
+            categoryOrSource: exp.category
+        });
+    });
+
+    currentIncome.forEach(inc => {
+        transactions.push({
+            ...inc,
+            type: 'income',
+            categoryOrSource: inc.source
+        });
+    });
+
+    filteredTransactions = transactions.filter(t => {
+        const transactionDate = new Date(t.date);
+        return transactionDate >= fromDate && transactionDate <= toDate;
+    });
+
+    currentPage = 1;
+    displayTransactionHistory();
+}
+
+function showTransactionHistory() {
+    document.querySelector('.transaction-history-section').scrollIntoView({ 
+        behavior: 'smooth',
+        block: 'start'
+    });
+}
+
+// ===== PAGINATION =====
+function nextPage() {
+    const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage);
+    if (currentPage < totalPages) {
+        currentPage++;
+        displayTransactionHistory();
+        document.querySelector('.transaction-list').scrollIntoView({ behavior: 'smooth' });
+    }
+}
+
+function previousPage() {
+    if (currentPage > 1) {
+        currentPage--;
+        displayTransactionHistory();
+        document.querySelector('.transaction-list').scrollIntoView({ behavior: 'smooth' });
+    }
+}
