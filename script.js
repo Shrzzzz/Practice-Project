@@ -165,6 +165,7 @@ async function handleLogin(e) {
     }));
 
     showDashboard(user);
+    initializeExpenseTracker();
 }
 
 // ===== EMAIL VERIFICATION =====
@@ -208,6 +209,7 @@ function handleEmailVerification(e) {
     
     setTimeout(() => {
         showDashboard(pendingUser);
+        initializeExpenseTracker();
     }, 1500);
 }
 
@@ -391,6 +393,7 @@ document.addEventListener('mousemove', resetInactivityTimer);
 
 let currentExpenses = [];
 let currentIncome = [];
+let currentBudgets = [];
 let currentFilter = 'all';
 let currentSort = 'date-desc';
 let currentPage = 1;
@@ -415,6 +418,12 @@ function initializeExpenseTracker() {
         incomeForm.addEventListener('submit', handleAddIncome);
     }
 
+    // Setup budget form submission
+    const budgetForm = document.getElementById('budget-form');
+    if (budgetForm) {
+        budgetForm.addEventListener('submit', handleSetBudget);
+    }
+
     // Setup date range change
     const dateRangeSelect = document.getElementById('date-range');
     if (dateRangeSelect) {
@@ -432,8 +441,10 @@ function initializeExpenseTracker() {
     // Load existing data
     loadExpenses();
     loadIncome();
+    loadBudgets();
     updateDashboardSummary();
     loadTransactionHistory();
+    displayBudgets();
 }
 
 // ===== ADD EXPENSE =====
@@ -474,6 +485,7 @@ function handleAddExpense(e) {
     loadExpenses();
     updateDashboardSummary();
     loadTransactionHistory();
+    updateBudgetDisplay();
 }
 
 // ===== ADD INCOME =====
@@ -634,6 +646,7 @@ function deleteExpense(expenseId) {
     loadExpenses();
     updateDashboardSummary();
     loadTransactionHistory();
+    updateBudgetDisplay();
 }
 
 // ===== EDIT EXPENSE =====
@@ -1231,4 +1244,198 @@ function previousPage() {
         displayTransactionHistory();
         document.querySelector('.transaction-list').scrollIntoView({ behavior: 'smooth' });
     }
+}
+
+// ===== BUDGET MANAGEMENT SYSTEM =====
+
+// Handle setting a budget
+function handleSetBudget(e) {
+    e.preventDefault();
+
+    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+    if (!currentUser) return;
+
+    const category = document.getElementById('budget-category').value;
+    const amount = parseFloat(document.getElementById('budget-amount').value);
+
+    // Check if budget already exists for this category
+    const existingBudgetIndex = currentBudgets.findIndex(b => b.category === category);
+
+    if (existingBudgetIndex !== -1) {
+        // Update existing budget
+        if (confirm(`A budget already exists for ${formatCategoryName(category)}. Do you want to update it?`)) {
+            currentBudgets[existingBudgetIndex].amount = amount;
+            currentBudgets[existingBudgetIndex].updatedAt = new Date().toISOString();
+            showToast(`Budget for ${formatCategoryName(category)} updated successfully!`, 'success');
+        } else {
+            return;
+        }
+    } else {
+        // Create new budget
+        const budget = {
+            id: generateBudgetId(),
+            userId: currentUser.id,
+            category: category,
+            amount: amount,
+            createdAt: new Date().toISOString()
+        };
+        currentBudgets.push(budget);
+        showToast(`Budget for ${formatCategoryName(category)} set successfully!`, 'success');
+    }
+
+    // Save budgets
+    saveBudgets();
+
+    // Reset form
+    document.getElementById('budget-form').reset();
+
+    // Update display
+    displayBudgets();
+}
+
+// Save budgets to localStorage
+function saveBudgets() {
+    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+    const storageKey = `budgets_${currentUser.id}`;
+    localStorage.setItem(storageKey, JSON.stringify(currentBudgets));
+}
+
+// Load budgets from localStorage
+function loadBudgets() {
+    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+    if (!currentUser) return;
+
+    const storageKey = `budgets_${currentUser.id}`;
+    currentBudgets = JSON.parse(localStorage.getItem(storageKey)) || [];
+}
+
+// Display all budgets with progress bars
+function displayBudgets() {
+    const budgetCards = document.getElementById('budget-cards');
+
+    if (currentBudgets.length === 0) {
+        budgetCards.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-piggy-bank"></i>
+                <p>No budgets set yet</p>
+                <p class="empty-subtitle">Set monthly budgets for different expense categories above</p>
+            </div>
+        `;
+        return;
+    }
+
+    // Get current month expenses for each category
+    const currentDate = new Date();
+    const currentMonth = currentDate.getMonth();
+    const currentYear = currentDate.getFullYear();
+
+    const monthlyExpenses = currentExpenses.filter(exp => {
+        const expDate = new Date(exp.date);
+        return expDate.getMonth() === currentMonth && expDate.getFullYear() === currentYear;
+    });
+
+    // Calculate spending per category
+    const categorySpending = {};
+    monthlyExpenses.forEach(exp => {
+        if (!categorySpending[exp.category]) {
+            categorySpending[exp.category] = 0;
+        }
+        categorySpending[exp.category] += exp.amount;
+    });
+
+    // Display budget cards
+    budgetCards.innerHTML = currentBudgets.map(budget => {
+        const spent = categorySpending[budget.category] || 0;
+        const remaining = budget.amount - spent;
+        const percentage = Math.min((spent / budget.amount) * 100, 100);
+        
+        let statusClass = 'safe';
+        let statusIcon = 'fa-check-circle';
+        let statusText = 'On Track';
+
+        if (percentage >= 100) {
+            statusClass = 'exceeded';
+            statusIcon = 'fa-exclamation-circle';
+            statusText = 'Budget Exceeded';
+        } else if (percentage >= 80) {
+            statusClass = 'warning';
+            statusIcon = 'fa-exclamation-triangle';
+            statusText = 'Near Limit';
+        }
+
+        return `
+            <div class="budget-card ${statusClass}">
+                <div class="budget-card-header">
+                    <div class="budget-category">
+                        <span class="budget-icon">${getCategoryIcon(budget.category)}</span>
+                        <h4>${formatCategoryName(budget.category)}</h4>
+                    </div>
+                    <button class="btn-icon btn-delete" onclick="deleteBudget('${budget.id}')" title="Delete Budget">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </div>
+                <div class="budget-amounts">
+                    <div class="budget-amount-row">
+                        <span class="label">Budget:</span>
+                        <span class="value">Rs ${budget.amount.toFixed(2)}</span>
+                    </div>
+                    <div class="budget-amount-row">
+                        <span class="label">Spent:</span>
+                        <span class="value spent">Rs ${spent.toFixed(2)}</span>
+                    </div>
+                    <div class="budget-amount-row">
+                        <span class="label">Remaining:</span>
+                        <span class="value ${remaining >= 0 ? 'positive' : 'negative'}">
+                            Rs ${Math.abs(remaining).toFixed(2)} ${remaining < 0 ? 'over' : ''}
+                        </span>
+                    </div>
+                </div>
+                <div class="budget-progress-container">
+                    <div class="budget-progress-bar">
+                        <div class="budget-progress-fill ${statusClass}" style="width: ${percentage}%">
+                            <span class="budget-percentage">${percentage.toFixed(1)}%</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="budget-status ${statusClass}">
+                    <i class="fas ${statusIcon}"></i>
+                    ${statusText}
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// Delete a budget
+function deleteBudget(budgetId) {
+    if (!confirm('Are you sure you want to delete this budget?')) return;
+
+    currentBudgets = currentBudgets.filter(b => b.id !== budgetId);
+    saveBudgets();
+    displayBudgets();
+    showToast('Budget deleted successfully!', 'success');
+}
+
+// Toggle budget form visibility
+function toggleBudgetForm() {
+    const form = document.getElementById('budget-form');
+    const button = event.currentTarget;
+    
+    if (form.style.display === 'none') {
+        form.style.display = 'flex';
+        button.classList.remove('active');
+    } else {
+        form.style.display = 'none';
+        button.classList.add('active');
+    }
+}
+
+// Generate unique budget ID
+function generateBudgetId() {
+    return 'budget_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+}
+
+// Update displayBudgets when expenses change
+function updateBudgetDisplay() {
+    displayBudgets();
 }

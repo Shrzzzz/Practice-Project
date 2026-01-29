@@ -219,6 +219,63 @@
             </div>
         </div>
 
+        <!-- Budget Management Section -->
+        <div class="budget-section">
+            <div class="section-card">
+                <div class="section-header">
+                    <h2><i class="fas fa-chart-line"></i> Monthly Budget Tracking</h2>
+                    <button class="btn-toggle" onclick="toggleBudgetForm()">
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                </div>
+                <form id="budget-form" class="expense-form">
+                    <div class="form-row">
+                        <div class="form-field">
+                            <label for="budget-category">Category*</label>
+                            <select id="budget-category" required>
+                                <option value="">Select Category</option>
+                                <option value="groceries">🛒 Groceries</option>
+                                <option value="utilities">💡 Utilities</option>
+                                <option value="entertainment">🎬 Entertainment</option>
+                                <option value="transportation">🚗 Transportation</option>
+                                <option value="healthcare">⚕️ Healthcare</option>
+                                <option value="education">📚 Education</option>
+                                <option value="dining">🍽️ Dining Out</option>
+                                <option value="shopping">🛍️ Shopping</option>
+                                <option value="rent">🏠 Rent/Mortgage</option>
+                                <option value="insurance">🛡️ Insurance</option>
+                                <option value="other">📝 Other</option>
+                            </select>
+                        </div>
+                        <div class="form-field">
+                            <label for="budget-amount">Budget Amount (Rs)*</label>
+                            <input type="number" id="budget-amount" placeholder="0.00" step="0.01" min="0" required>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary btn-budget">
+                            <i class="fas fa-save"></i> Set Budget
+                        </button>
+                        <button type="reset" class="btn-reset">
+                            <i class="fas fa-undo"></i> Clear
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Budget Progress Display -->
+                <div class="budget-overview">
+                    <h3 class="budget-overview-title"><i class="fas fa-wallet"></i> Budget Overview</h3>
+                    <div class="budget-cards" id="budget-cards">
+                        <div class="empty-state">
+                            <i class="fas fa-piggy-bank"></i>
+                            <p>No budgets set yet</p>
+                            <p class="empty-subtitle">Set monthly budgets for different expense categories above</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Expense Entry Section -->
         <div class="expense-section">
             <div class="section-card">
